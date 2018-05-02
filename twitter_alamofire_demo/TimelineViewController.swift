@@ -11,6 +11,8 @@ import UIKit
 class TimelineViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
     var tweets: [Tweet] = []
+
+    var refreshControl: UIRefreshControl!
     
     @IBOutlet weak var tableView: UITableView!
     
@@ -20,17 +22,12 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
         tableView.dataSource = self
         tableView.delegate = self
         
-        tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.estimatedRowHeight = 100
+        tableView.rowHeight = 389
         
-        APIManager.shared.getHomeTimeLine { (tweets, error) in
-            if let tweets = tweets {
-                self.tweets = tweets
-                self.tableView.reloadData()
-            } else if let error = error {
-                print("Error getting home timeline: " + error.localizedDescription)
-            }
-        }
+        refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), for: UIControlEvents.valueChanged)
+        self.tableView.insertSubview(refreshControl, at: 0)
+        refresh()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -59,15 +56,32 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
         APIManager.shared.logout()
     }
     
+    func refreshControlAction(_ refreshControl: UIRefreshControl){
+        refresh()
+    }
     
-    /*
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
-     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destinationViewController.
-     // Pass the selected object to the new view controller.
-     }
-     */
+    func refresh(){
+        APIManager.shared.getHomeTimeLine { (tweets, error) in
+            if let tweets = tweets {
+                self.tweets = tweets
+                self.tableView.reloadData()
+                self.refreshControl.endRefreshing()
+                
+            } else if let error = error {
+                print("Error getting home timeline: " + error.localizedDescription)
+            }
+        }
+        
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "showTweet"{
+            
+            let indexPath = self.tableView.indexPathForSelectedRow
+            let nav = segue.destination as? UINavigationController
+            let vc = nav?.viewControllers.first as! TweetDetailViewController
+            vc.tweet = tweets[(indexPath?.row)!]
+        }
+    }
     
 }

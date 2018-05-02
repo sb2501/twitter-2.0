@@ -11,9 +11,13 @@ import Foundation
 class User {
     
     var name: String
+    var screen_name: String
+    var profile_image_url: String
     
     init(dictionary: [String: Any]) {
         name = dictionary["name"] as! String
+        screen_name = dictionary["screen_name"] as! String
+        profile_image_url = dictionary["profile_image_url"] as! String
 
     }
 }
